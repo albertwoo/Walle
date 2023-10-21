@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch in pi",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "scp-to-pi",
+            "program": "~/dotnet/dotnet",
+            "args": [
+                "./Walle.dll",
+            ],
+            "cwd": "~/Playground/Walle",
+            "stopAtEntry": false,
+            "console": "internalConsole",
+            "pipeTransport": {
+                "pipeCwd": "${workspaceRoot}",
+                "pipeProgram": "ssh",
+                "pipeArgs": [
+                    "pi@192.168.3.48"
+                ],
+                "debuggerPath": "~/vsdbg/vsdbg"
+            }
+        }
+    ]
+}

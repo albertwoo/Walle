@@ -1,0 +1,109 @@
+@code {
+    [Parameter]
+    public required Action<double, double> OnMovedStart { get; set; }
+
+    [Parameter]
+    public required Action OnMovedEnd { get; set; }
+
+    [Parameter]
+    public int Debounce { get; set; } = 20;
+
+    [Parameter]
+    public int PanelSize { get; set; } = 200;
+
+    [Parameter]
+    public int IndicatorSize { get; set; } = 50;
+
+    [Parameter]
+    public bool KeepPosition { get; set; }
+
+
+    double? moveScreenX;
+    double? moveScreenY;
+    double moveX;
+    double moveY;
+    double indicatorX;
+    double indicatorY;
+
+    Timer? moveDebouncer;
+
+
+    void StartMove(object? _)
+    {
+        OnMovedStart.Invoke(indicatorX, -indicatorY);
+    }
+
+    void MoveStart(double screenX, double screenY)
+    {
+        moveScreenX = screenX;
+        moveScreenY = screenY;
+        moveDebouncer = new(StartMove, null, Debounce, 0);
+    }
+
+    public void Move(double screenX, double screenY)
+    {
+        if (moveScreenX.HasValue && moveScreenY.HasValue)
+        {
+            this.moveX += screenX - moveScreenX.Value;
+            this.moveY += screenY - moveScreenY.Value;
+            moveScreenX = screenX;
+            moveScreenY = screenY;
+
+            var radius = PanelSize / 2;
+            if (moveX * moveX + moveY * moveY > radius * radius)
+            {
+                if (moveX == 0)
+                {
+                    indicatorX = 0;
+                    indicatorY = moveY > 0 ? -radius : radius;
+                }
+                else
+                {
+                    var angle = Math.Atan(moveY / moveX);
+                    var revert = moveX < 0 ? -1 : 1;
+                    indicatorX = Math.Cos(angle) * radius * revert;
+                    indicatorY = Math.Sin(angle) * radius * revert;
+                }
+            }
+            else
+            {
+                indicatorX = moveX;
+                indicatorY = moveY;
+            }
+
+            moveDebouncer?.Change(Debounce, 0);
+        }
+    }
+
+    public void MoveEnd()
+    {
+        moveDebouncer?.Dispose();
+        moveDebouncer = null;
+        moveScreenX = null;
+        moveScreenY = null;
+
+        if (!KeepPosition) {
+            indicatorX = 0;
+            indicatorY = 0;
+        }
+
+        moveX = indicatorX;
+        moveY = indicatorY;
+
+        OnMovedEnd?.Invoke();
+    }
+
+    double IndicatorLeft => indicatorX + PanelSize / 2 - IndicatorSize / 2;
+    double IndicatorTop => indicatorY + PanelSize / 2 - IndicatorSize / 2;
+}
+
+<div style="width: @(PanelSize)px; height: @(PanelSize)px; border-radius: @(PanelSize/2)px; background-color: aliceblue; position: relative;"
+     @onmouseup="_ => MoveEnd()"
+     @onmousemove="e => Move(e.ScreenX, e.ScreenY)"
+     @ontouchend="_ => MoveEnd()"
+     @ontouchmove="e => Move(e.Touches[0].ScreenX, e.Touches[0].ScreenY)">
+    <div style="width: @(IndicatorSize)px; height: @(IndicatorSize)px; border-radius: @(IndicatorSize/2)px;  left: @(IndicatorLeft)px; top: @(IndicatorTop)px; background-color: gray; position: absolute;"
+         @onmousedown="e => MoveStart(e.ScreenX, e.ScreenY)"
+         @ontouchstart="e => MoveStart(e.Touches[0].ScreenX, e.Touches[0].ScreenY)">
+    </div>
+</div>

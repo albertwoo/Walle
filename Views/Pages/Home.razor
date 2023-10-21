@@ -1,0 +1,48 @@
+﻿@page "/"
+@rendermode RenderMode.InteractiveServer
+
+@inject IToastService ToastService
+@inject FootService FootService
+@inject HeadService HeadService
+
+@code {
+    CirclePanel? headControlRef;
+    CirclePanel? footControlRef;
+
+    int headPanelSize = 200;
+    int footPanelSize = 200;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HeadService.Move(0, 0, headPanelSize / 2);
+    }
+
+    async void StartHeadMove(double x, double y) => await HeadService.Move(x, y, headPanelSize / 2);
+    
+    async void StartFootMove(double x, double y) => await FootService.Move(x, y, footPanelSize / 2);
+    async void StopFootMove() => await FootService.StopMove();
+}
+
+<PageTitle>Walle</PageTitle>
+
+<FluentGrid Spacing="0" style="height: 100%; overflow: hidden;">
+    <FluentGridItem xs="6" style="height: 100%; overflow: hidden; position: relative;"
+        @onmouseup="_ => footControlRef?.MoveEnd()"
+        @onmousemove="e => footControlRef?.Move(e.ScreenX, e.ScreenY)"
+        @ontouchend="_ => footControlRef?.MoveEnd()"
+        @ontouchmove="e => footControlRef?.Move(e.Touches[0].ScreenX, e.Touches[0].ScreenY)">
+        <div style="position: absolute; left: 40px; bottom: 40px;">
+            <CirclePanel @ref=footControlRef PanelSize="footPanelSize" OnMovedStart="StartFootMove"
+                         OnMovedEnd="StopFootMove" />
+        </div>
+    </FluentGridItem>
+    <FluentGridItem xs="6" style="height: 100%; overflow: hidden; position: relative;"
+        @onmouseup="_ => headControlRef?.MoveEnd()"
+        @onmousemove="e => headControlRef?.Move(e.ScreenX, e.ScreenY)"
+        @ontouchend="_ => headControlRef?.MoveEnd()"
+        @ontouchmove="e => headControlRef?.Move(e.Touches[0].ScreenX, e.Touches[0].ScreenY)">
+        <div style="position: absolute; right: 40px; bottom: 40px;">
+            <CirclePanel @ref=headControlRef PanelSize="headPanelSize" OnMovedStart="StartHeadMove" KeepPosition />
+        </div>
+    </FluentGridItem>
+</FluentGrid>
